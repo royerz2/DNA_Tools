@@ -10,72 +10,14 @@ import random
 from tqdm import tqdm
 
 # Parameters
-ProteinsSequenced = True   # False activates Entrez sequence fetching
+ProteinsSequenced = True  # False activates Entrez sequence fetching
 SeqRevTranscribed = False  # False activates reverse transcription
 filename = "VBPO.xlsx"
 Entrez.email = "royerz.2002@gmail.com"
-verbose = True
+verbose = False
 
 
-def reverse(string):
-    string = string[::-1]
-    return string
-
-
-def fetch_sequence(id_frame):
-    code_list = id_frame.code.tolist()
-    if verbose: print(code_list)
-    if verbose: print(len(code_list))
-    for i in tqdm(range(len(code_list))):
-        try:
-            # Reverse translate Protein to RNA
-            handle = Entrez.efetch(
-                db="protein", id=code_list[i], rettype="fasta")
-            record = SeqIO.read(handle, "fasta")
-
-            aa_sequence = record.seq
-            if verbose: print(f"AA Sequence: {aa_sequence}")
-            ws[f'D{i + 2}'] = f"{aa_sequence}"
-
-            # Reverse translate Protein to RNA
-            codon_list = list(map(reverse_translate, aa_sequence))  # Use RT to get codon list from AAs)
-            if verbose: print(f"Codons: {codon_list}")
-
-            mrna = ''.join(codon_list)  # Merge codons to get mRNA strand.
-            if verbose: print("RNA: " + mrna)
-
-            # Reverse translate RNA to cDNA
-            cdna = mrna.replace("U", "T")  # Reverse translate mRNA to Crick (anti-coding) strand.
-            cdna_seq = Seq(cdna)  # Convert cDNA sequence to Seq data structure.
-            if verbose: print("cDNA (5-3): " + cdna_seq)
-            if verbose: print("cDNA (3-5): " + cdna_seq.complement())
-            ws[f'E{i + 2}'] = f"{cdna_seq.complement()}"  # Send cDNA Watson (coding) strand to excel sheet.
-            ws[f'F{i + 2}'] = f"{cdna_seq}"  # Send cDNA Crick (anti-coding) strand to excel sheet.
-
-            # Design primers.
-            cdna_dseq = Dseqrecord(cdna, reverse(str(cdna_seq.complement)), linear=True, circular=False)
-            ampl = primer_design(cdna_dseq)
-            fp = ampl.forward_primer
-            rp = ampl.reverse_primer
-            ws[f'G{i + 2}'] = f"{str(fp.seq)}"  # Send forward primer to excel sheet.
-            ws[f'H{i + 2}'] = f"{str(rp.seq)}"  # Send reverse primer to excel sheet.
-
-        except urllib.error.HTTPError:  # If cannot find AA sequence, fill all columns in excel "n/a".
-            if verbose: print(f"HTTP Error at position {i}.")
-            ws[f'C{i + 2}'] = "n/a"
-            ws[f'D{i + 2}'] = "n/a"
-            ws[f'E{i + 2}'] = "n/a"
-            ws[f'F{i + 2}'] = "n/a"
-            ws[f'G{i + 2}'] = "n/a"
-            ws[f'H{i + 2}'] = "n/a"
-
-        except Exception as e:  # Handle unexpected EOF and continue loop.
-            print(e)
-
-    print("Protein fetching, translation and primer design complete.")
-
-
-def reverse_translate(n):
+def aa_to_codon(n):
     switch = {
         "A": (random.choices(["GCU", "GCC", "GCA", "GCG"], weights=(0.19, 0.25, 0.22, 0.34), k=1)),
         "I": (random.choices(["AUU", "AUC", "AUA"], weights=(0.47, 0.46, 0.07), k=1)),
@@ -105,10 +47,79 @@ def reverse_translate(n):
 
     return codon_str
 
+def id_to_aa_sequence(protein_id):
+    try:
+        # Get AA sequence from Entrez database.
+        handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta")
+        record = SeqIO.read(handle, "fasta")
 
-def gibson_assembly(cdna_frame):
+        aa_sequence = record.seq
+        if verbose: print(f"AA Sequence: {aa_sequence}")
+        ws[f'D{i + 2}'] = f"{aa_sequence}"
+
+        return aa_sequence
+
+    except urllib.error.HTTPError:  # If cannot find AA sequence, fill all columns in excel "n/a".
+        if verbose: print(f"HTTP Error at position {i}.")
+        ws[f'C{i + 2}'] = "n/a"
+        ws[f'D{i + 2}'] = "n/a"
+        ws[f'E{i + 2}'] = "n/a"
+        ws[f'F{i + 2}'] = "n/a"
+        ws[f'G{i + 2}'] = "n/a"
+        ws[f'H{i + 2}'] = "n/a"
+
+    except Exception as e:  # Handle unexpected EOF and continue loop.
+        print(e)
+
+
+def aa_to_mrna(aa_sequence):
+    try:
+        # Reverse translate Protein to RNA
+        codon_list = list(map(aa_to_codon, aa_sequence))  # Use RT to get codon list from AAs)
+        if verbose: print(f"Codons: {codon_list}")
+
+        mrna = ''.join(codon_list)  # Merge codons to get mRNA strand.
+        if verbose: print("RNA: " + mrna)
+
+        return mrna
+
+    except Exception as e:
+        print(e)
+
+
+def mrna_to_cdna_seq(mrna):
+    try:
+        cdna = mrna.replace("U", "T")  # Reverse translate mRNA to Crick (anti-coding) strand.
+        cdna_seq = Seq(cdna)  # Convert cDNA sequence to Seq data structure.
+        if verbose: print("cDNA (5-3): " + cdna_seq)
+        if verbose: print("cDNA (3-5): " + cdna_seq.complement())
+        ws[f'E{i + 2}'] = f"{cdna_seq.complement()}"  # Send cDNA Watson (coding) strand to excel sheet.
+        ws[f'F{i + 2}'] = f"{cdna_seq}"  # Send cDNA Crick (anti-coding) strand to excel sheet.
+        return cdna_seq
+
+    except Exception as e:
+        print(e)
+
+def cdna_to_primer(cdna_seq):
+    try:
+        # Design primers.
+        cdna_dseq = Dseqrecord(cdna_seq, str(cdna_seq.complement)[::-1], linear=True, circular=False)
+        ampl = primer_design(cdna_dseq)
+        fp = ampl.forward_primer
+        rp = ampl.reverse_primer
+        ws[f'G{i + 2}'] = f"{str(fp.seq)}"  # Send forward primer to excel sheet.
+        ws[f'H{i + 2}'] = f"{str(rp.seq)}"  # Send reverse primer to excel sheet.
+
+        primers = (fp, rp)
+
+        return primers
+
+    except Exception as e:
+        print(e)
+
+
+def gibson_assembly():
     pass
-
 
 wb = load_workbook(filename)
 sheets = wb.sheetnames
@@ -119,7 +130,16 @@ dataframe = pd.DataFrame(ws.values, columns=["prot", "spp", "code", "aa", "cDNA(
 dataframe.drop(index=dataframe.index[0], axis=0, inplace=True)
 
 print("Starting protein fetching, reverse translation and primer design.")
-fetch_sequence(dataframe)
+
+code_list = dataframe.code.tolist()
+
+if verbose: print(code_list)
+if verbose: print(len(code_list))
+
+for i in tqdm(range(len(code_list))):
+    aa_sequence = id_to_aa_sequence(code_list[i])
+    mrna = aa_to_mrna(aa_sequence)
+    cdna_seq = mrna_to_cdna_seq(mrna)
+    primers = cdna_to_primer(cdna_seq)
 
 wb.save(filename=filename)
-
