@@ -47,6 +47,7 @@ def aa_to_codon(n):
 
     return codon_str
 
+
 def id_to_aa_sequence(protein_id):
     try:
         # Get AA sequence from Entrez database.
@@ -100,6 +101,7 @@ def mrna_to_cdna_seq(mrna):
     except Exception as e:
         print(e)
 
+
 def cdna_to_primer(cdna_seq):
     try:
         # Design primers.
@@ -118,8 +120,15 @@ def cdna_to_primer(cdna_seq):
         print(e)
 
 
-def gibson_assembly():
-    pass
+def gibson_assembly(plasmid, *inserts):
+    print(f'Plasmid: {plasmid}')
+    i = 0
+    for insert in inserts:
+
+        print(f'Insert {i}: {insert}.')
+        i += 1
+
+
 
 wb = load_workbook(filename)
 sheets = wb.sheetnames
