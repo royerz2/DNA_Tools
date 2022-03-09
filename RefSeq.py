@@ -17,6 +17,26 @@ Entrez.email = "royerz.2002@gmail.com"
 verbose = False
 
 
+class DNA:
+    def __init__(self, seq, dseq, fp, rp, id, mrna, aa):
+        self.seq = seq
+        self.dseq = dseq
+
+
+class Plasmid(DNA):
+    def __init__(self, restriction_sites):
+        self.restriction_sites = restriction_sites
+
+
+class Insert(DNA):
+    def __init__(self, fp, rp, id, mrna, aa):
+        self.fp = fp
+        self.rp = rp
+        self.id = id
+        self.mrna = mrna
+        self.aa = aa
+
+
 def aa_to_codon(n):
     switch = {
         "A": (random.choices(["GCU", "GCC", "GCA", "GCG"], weights=(0.19, 0.25, 0.22, 0.34), k=1)),
@@ -124,10 +144,8 @@ def gibson_assembly(plasmid, *inserts):
     print(f'Plasmid: {plasmid}')
     i = 0
     for insert in inserts:
-
         print(f'Insert {i}: {insert}.')
         i += 1
-
 
 
 wb = load_workbook(filename)
