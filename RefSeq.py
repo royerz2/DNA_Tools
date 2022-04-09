@@ -1,6 +1,6 @@
 import urllib.error
 import pandas as pd
-from Bio import SeqIO, Entrez
+from Bio import SeqIO, Entrez, Restriction
 from Bio.Seq import Seq
 from openpyxl import workbook, load_workbook
 from pydna.dseq import Dseq
@@ -10,22 +10,36 @@ import random
 from tqdm import tqdm
 
 # Parameters
+
+codon_list = ['ATT', 'ATC', 'ATA', 'CTT', 'CTC', 'CTA', 'CTG', 'TTA', 'TTG', 'GTT', 'GTC', 'GTA', 'GTG', 'TTT',
+              'TTC', 'ATG', 'TGT', 'TGC', 'GCT', 'GCC', 'GCA', 'GCG', 'GGT', 'GGC', 'GGA', 'GGG', 'CCT', 'CCC',
+              'CCA', 'CCG', 'ACT', 'ACC', 'ACA', 'ACG', 'TCT', 'TCC', 'TCA', 'TCG', 'AGT', 'AGC', 'TAT', 'TAC',
+              'TGG', 'CAA', 'CAG', 'AAT', 'AAC', 'CAT', 'CAC', 'GAA', 'GAG', 'GAT', 'GAC', 'AAA', 'AAG', 'CGT',
+              'CGC', 'CGA', 'CGG', 'AGA', 'AGG', 'TAA', 'TAG', 'TGA']
+
 ProteinsSequenced = True  # False activates Entrez sequence fetching
 SeqRevTranscribed = False  # False activates reverse transcription
-filename = "VBPO.xlsx"
+filename = "Book2.xlsx"
 Entrez.email = "royerz.2002@gmail.com"
 verbose = False
 
+digestionName1 = input('What is your first digestion site?')
+digestionName2 = input('What is your second digestion site?')
+
+digestionSite1 = getattr(Restriction, digestionName1)
+digestionSite2 = getattr(Restriction, digestionName2)
+
 
 class DNA:
-    def __init__(self, seq, dseq, fp, rp, id, mrna, aa):
+    def __init__(self, seq, dseq):
         self.seq = seq
         self.dseq = dseq
 
 
 class Plasmid(DNA):
-    def __init__(self, restriction_sites):
+    def __init__(self, restriction_sites, linearized):
         self.restriction_sites = restriction_sites
+        self.linearized = linearized
 
 
 class Insert(DNA):
@@ -125,14 +139,16 @@ def mrna_to_cdna_seq(mrna):
 def cdna_to_primer(cdna_seq):
     try:
         # Design primers.
-        cdna_dseq = Dseqrecord(cdna_seq, str(cdna_seq.complement)[::-1], linear=True, circular=False)
+        cdna_dseq = Dseqrecord(cdna_seq, str(cdna_seq.complement), linear=True, circular=False)
         ampl = primer_design(cdna_dseq)
-        fp = ampl.forward_primer
-        rp = ampl.reverse_primer
-        ws[f'G{i + 2}'] = f"{str(fp.seq)}"  # Send forward primer to excel sheet.
-        ws[f'H{i + 2}'] = f"{str(rp.seq)}"  # Send reverse primer to excel sheet.
 
-        primers = (fp, rp)
+        fw = ampl.forward_primer
+        rev = ampl.reverse_primer[::-1]
+
+        ws[f'G{i + 2}'] = f"{str(fw.seq)}"  # Send forward primer to excel sheet.
+        ws[f'H{i + 2}'] = f"{str(rev.seq)}"  # Send reverse primer to excel sheet.
+
+        primers = (fw, rev)
 
         return primers
 
@@ -140,12 +156,24 @@ def cdna_to_primer(cdna_seq):
         print(e)
 
 
-def gibson_assembly(plasmid, *inserts):
-    print(f'Plasmid: {plasmid}')
-    i = 0
-    for insert in inserts:
-        print(f'Insert {i}: {insert}.')
-        i += 1
+def restriction_assembly(insert, restriction1, restriction2):
+    fw, rev = cdna_to_primer(insert)
+
+    # Check for hairpin structure in primer.
+
+    for codon in codon_list:
+        codon = codon
+        anti_codon = str(Seq(codon).complement())
+        if fw.find(codon) == -1 and rev.find(anti_codon) == -1:  # check if codon in ForwardPrimer and ReversePrimer
+            break
+
+    fwRestricting = codon + fw + getattr(Restriction, restriction1)
+    revRestricting = anti_codon + rev + getattr(Restriction, restriction2)
+
+    ws[f'I{i + 2}'] = f"{str(fwRestricting.seq)}"  # Send forward restricting primer to excel sheet.
+    ws[f'J{i + 2}'] = f"{str(revRestricting.seq)}"  # Send reverse restricting primer to excel sheet.
+
+    return fwRestricting, revRestricting
 
 
 wb = load_workbook(filename)
@@ -160,8 +188,9 @@ print("Starting protein fetching, reverse translation and primer design.")
 
 code_list = dataframe.code.tolist()
 
-if verbose: print(code_list)
-if verbose: print(len(code_list))
+if verbose:
+    print(code_list)
+    print(len(code_list))
 
 for i in tqdm(range(len(code_list))):
     aa_sequence = id_to_aa_sequence(code_list[i])
@@ -169,4 +198,5 @@ for i in tqdm(range(len(code_list))):
     cdna_seq = mrna_to_cdna_seq(mrna)
     primers = cdna_to_primer(cdna_seq)
 
+print("Protein fetching complete, saving excel sheet.")
 wb.save(filename=filename)
