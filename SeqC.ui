@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>0</y>
+     <y>-1</y>
      <width>1161</width>
      <height>781</height>
     </rect>
@@ -291,7 +291,7 @@
       <string>Restriction 2</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="idLineEdit_2">
+    <widget class="QLineEdit" name="listStatus">
      <property name="enabled">
       <bool>false</bool>
      </property>
