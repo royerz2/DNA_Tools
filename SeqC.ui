@@ -17,13 +17,16 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>-1</y>
+     <y>0</y>
      <width>1161</width>
      <height>781</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
+   </property>
+   <property name="tabShape">
+    <enum>QTabWidget::Rounded</enum>
    </property>
    <property name="currentIndex">
     <number>0</number>
@@ -34,61 +37,55 @@
    <property name="tabBarAutoHide">
     <bool>false</bool>
    </property>
-   <widget class="QWidget" name="entrez">
+   <widget class="QWidget" name="tab">
     <attribute name="title">
-     <string>Entrez Scraping</string>
+     <string>Entrez Scraping Table</string>
     </attribute>
-    <widget class="QRadioButton" name="proteinRadio">
+    <widget class="QLineEdit" name="idLineEdit">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>200</y>
-       <width>71</width>
-       <height>20</height>
+       <x>118</x>
+       <y>580</y>
+       <width>125</width>
+       <height>21</height>
       </rect>
      </property>
      <property name="text">
-      <string>Protein</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
+      <string>X71080.1</string>
      </property>
     </widget>
-    <widget class="QRadioButton" name="nucleotideRadio">
+    <widget class="QPushButton" name="pushButton_5">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>200</y>
-       <width>100</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Nucleotide</string>
-     </property>
-     <property name="autoRepeat">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_2">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>120</y>
-       <width>60</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>ID List</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_3">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>120</y>
+       <x>1030</x>
+       <y>610</y>
        <width>91</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Export</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_6">
+     <property name="geometry">
+      <rect>
+       <x>720</x>
+       <y>580</y>
+       <width>401</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>File Name</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_24">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>581</y>
+       <width>84</width>
        <height>16</height>
       </rect>
      </property>
@@ -96,155 +93,12 @@
       <string>Add Entrez ID</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="idLineEdit">
+    <widget class="QLabel" name="label_23">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>150</y>
-       <width>231</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>ID</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_4">
-     <property name="geometry">
-      <rect>
-       <x>490</x>
-       <y>120</y>
-       <width>60</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>DNA</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_5">
-     <property name="geometry">
-      <rect>
-       <x>690</x>
-       <y>120</y>
-       <width>60</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>RNA</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_6">
-     <property name="geometry">
-      <rect>
-       <x>890</x>
-       <y>120</y>
-       <width>141</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Amino Acid Sequence</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_7">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>410</y>
-       <width>101</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Forward Primer</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_8">
-     <property name="geometry">
-      <rect>
-       <x>490</x>
-       <y>410</y>
-       <width>101</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Reverse Primer</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>690</x>
-       <y>410</y>
-       <width>161</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Assembly Forward Primer</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_19">
-     <property name="geometry">
-      <rect>
-       <x>889</x>
-       <y>410</y>
-       <width>161</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Assembly Reverse Primer</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="addtoList">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>310</y>
-       <width>51</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Add</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="exportLocationListScraping">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>390</y>
-       <width>161</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Export Location</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="exportButton">
-     <property name="geometry">
-      <rect>
-       <x>200</x>
-       <y>390</y>
-       <width>71</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Export</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_22">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>370</y>
-       <width>91</width>
+       <x>620</x>
+       <y>580</y>
+       <width>86</width>
        <height>16</height>
       </rect>
      </property>
@@ -252,213 +106,100 @@
       <string>Export to .xlsx</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="assembliesCheck">
+    <widget class="QLineEdit" name="restrictionLine1">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>250</y>
-       <width>141</width>
+       <x>260</x>
+       <y>580</y>
+       <width>125</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>XbaI</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="restrictionLine2">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>580</y>
+       <width>125</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>XbaI</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="proteinRadio">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>610</y>
+       <width>69</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Design Assemblies</string>
+      <string>Protein</string>
      </property>
-    </widget>
-    <widget class="QLineEdit" name="restrictionLine_1">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>280</y>
-       <width>111</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Restriction 1</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="restrictionLine_2">
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>280</y>
-       <width>111</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Restriction 2</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="listStatus">
-     <property name="enabled">
+     <property name="checked">
       <bool>false</bool>
      </property>
+    </widget>
+    <widget class="QPushButton" name="addtoTable">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>660</y>
-       <width>231</width>
-       <height>21</height>
+       <x>340</x>
+       <y>610</y>
+       <width>191</width>
+       <height>32</height>
       </rect>
      </property>
      <property name="text">
-      <string>Status</string>
+      <string>Add</string>
      </property>
     </widget>
-    <widget class="QListWidget" name="idListWidget">
+    <widget class="QRadioButton" name="nucleotideRadio">
      <property name="geometry">
       <rect>
-       <x>290</x>
-       <y>150</y>
-       <width>181</width>
-       <height>251</height>
+       <x>210</x>
+       <y>610</y>
+       <width>91</width>
+       <height>20</height>
       </rect>
      </property>
-    </widget>
-    <widget class="QListWidget" name="fwListWidget">
-     <property name="geometry">
-      <rect>
-       <x>290</x>
-       <y>430</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
+     <property name="text">
+      <string>Nucleotide</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="autoRepeat">
+      <bool>false</bool>
      </property>
     </widget>
-    <widget class="QListWidget" name="revListWidget">
+    <widget class="QTableWidget" name="entrezTableWidget">
      <property name="geometry">
       <rect>
-       <x>490</x>
-       <y>430</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="dnaListWidget">
-     <property name="geometry">
-      <rect>
-       <x>490</x>
-       <y>150</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="assemblyFwListWidget">
-     <property name="geometry">
-      <rect>
-       <x>690</x>
-       <y>430</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="rnaListWidget">
-     <property name="geometry">
-      <rect>
-       <x>690</x>
-       <y>150</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="aaListWidget">
-     <property name="geometry">
-      <rect>
-       <x>890</x>
-       <y>150</y>
-       <width>181</width>
-       <height>251</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="assemblyRevListWidget">
-     <property name="geometry">
-      <rect>
-       <x>890</x>
-       <y>430</y>
-       <width>181</width>
-       <height>251</height>
+       <x>20</x>
+       <y>0</y>
+       <width>1111</width>
+       <height>561</height>
       </rect>
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="tab">
+   <widget class="QWidget" name="tab_3">
     <attribute name="title">
-     <string>Entrez Scraping Table</string>
+     <string>PCR Simulation</string>
     </attribute>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1" colspan="2">
-      <widget class="QLineEdit" name="lineEdit_3">
-       <property name="text">
-        <string>ID</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="3">
-      <widget class="QPushButton" name="pushButton_5">
-       <property name="text">
-        <string>Export</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2" colspan="2">
-      <widget class="QRadioButton" name="proteinRadio_3">
-       <property name="text">
-        <string>Protein</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1" colspan="2">
-      <widget class="QLineEdit" name="lineEdit_6">
-       <property name="text">
-        <string>File Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QPushButton" name="addtoTable">
-       <property name="text">
-        <string>Add</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" colspan="4">
-      <widget class="QTableView" name="tableView"/>
-     </item>
-     <item row="2" column="1">
-      <widget class="QRadioButton" name="nucleotideRadio_3">
-       <property name="text">
-        <string>Nucleotide</string>
-       </property>
-       <property name="autoRepeat">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_24">
-       <property name="text">
-        <string>Add Entrez ID</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_23">
-       <property name="text">
-        <string>Export to .xlsx</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Assembly Simulation</string>
+    </attribute>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
@@ -523,7 +264,7 @@
       <string>Restriction Sites</string>
      </property>
     </widget>
-    <widget class="QTableWidget" name="tableWidget">
+    <widget class="QTableWidget" name="restrictionTableWidget">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -621,6 +362,32 @@
      </property>
      <property name="text">
       <string>Default Export Location</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_10">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>690</y>
+       <width>1041</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Disclaimer: This software serves as a master algorithm and intuitive user interface for ease of use to the pydna and BioPython libraries.  Stand on the shoulders of giants.</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>650</y>
+       <width>181</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>© Roy Erzurumluoğlu, 2022</string>
      </property>
     </widget>
    </widget>

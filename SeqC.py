@@ -1,29 +1,12 @@
 import urllib.error
 from Bio import SeqIO, Entrez, Restriction
 from Bio.Seq import Seq
+from PyQt5.QtWidgets import QTableWidgetItem
 from pydna.dseqrecord import Dseqrecord
 from pydna.design import primer_design
 import random
 from PyQt5 import QtWidgets, uic
 import sys
-
-
-# TODO Other assembly methods
-# TODO Nucleotide scraping
-# TODO Table Widget instead of List Widget
-# TODO PCR Simulation
-# TODO take csv inputs
-# TODO Assembly Simulation
-# TODO GC-Melting check
-# TODO Secondary Structure Checks (Except hairpin)
-# TODO Non-Coding DNA interaction analysis (Ask Erik)
-# TODO Automated Restriction Enzyme Selection
-# TODO Export to Excel function
-# TODO Feature mapping on a plasmid
-# TODO Plasmid Linearization
-# TODO Logo, Title
-# TODO Executable
-# TODO Differential Codon Optimization
 
 # Parameters
 verbose = False  # Set to true to see output as they are imported from
@@ -95,56 +78,60 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setStyleSheet = 'QPushButton{border-radius:40px;}'
         Entrez.email = self.emailSetting.text()
 
-        #  On Click Actions for List View entrez Scraping Page
-        self.addtoList.clicked.connect(self.list_results)
+        #  On click actions and settings for table view entrez scraping page.
+        self.entrezTableWidget.setRowCount(1)  # Row count
+        self.entrezTableWidget.setColumnCount(8)  # Column count
 
-        #  On click actions for table view entrez scraping page.
         self.addtoTable.clicked.connect(self.table_results)
+        self.entrezTableWidget.setItem(0, 0, QTableWidgetItem("ID"))
+        self.entrezTableWidget.setItem(0, 1, QTableWidgetItem("DNA"))
+        self.entrezTableWidget.setItem(0, 2, QTableWidgetItem("RNA"))
+        self.entrezTableWidget.setItem(0, 3, QTableWidgetItem("Protein"))
+        self.entrezTableWidget.setItem(0, 4, QTableWidgetItem("Fw Primer"))
+        self.entrezTableWidget.setItem(0, 5, QTableWidgetItem("Rev Primer"))
+        self.entrezTableWidget.setItem(0, 6, QTableWidgetItem("Fw Assembly"))
+        self.entrezTableWidget.setItem(0, 7, QTableWidgetItem("Rev Assembly"))
 
     # On click methods for buttons.
     def table_results(self):
-        pass
+        last_row = self.entrezTableWidget.rowCount()
+        row_toAdd = last_row + 1
 
-    def list_results(self):
-        try:
-            # Get properties of the protein with the given ID.
-            resultInsert = self.entrez_fetch_protein()
-            # Add results to the list widgets.
-            self.aaListWidget.addItem(resultInsert.aa_sequence)
-            self.rnaListWidget.addItem(resultInsert.mrna)
-            self.dnaListWidget.addItem(resultInsert.dna)
-            self.fwListWidget.addItem(resultInsert.fw_primer)
-            self.revListWidget.addItem(resultInsert.rev_primer)
-            self.assemblyFwListWidget.addItem(resultInsert.fw_assembly)
-            self.assemblyRevListWidget.addItem(resultInsert.rev_assembly)
-            # Added last so that line index continuity is kept when exception occurs
-            self.idListWidget.addItem(self.idLineEdit.text())
+        # Increase row number to inhabit incoming data in the following lines.
+        self.entrezTableWidget.setRowCount(row_toAdd)
 
-        except Exception as e:
-            print(e)
-            # Fill all columns with n/a and print error message to status textbox.
-            self.listStatus.setText = e
-            self.idListWidget.addItem('n/a')
-            self.aaListWidget.addItem('n/a')
-            self.rnaListWidget.addItem('n/a')
-            self.dnaListWidget.addItem('n/a')
-            self.fwListWidget.addItem('n/a')
-            self.revListWidget.addItem('n/a')
-            self.assemblyFwListWidget.addItem('n/a')
-            self.assemblyRevListWidget.addItem('n/a')
+        if self.proteinRadio.isChecked():
+            resultInsert = self.entrez_fetch_protein(self.idLineEdit.text(), self.restrictionLine1.text(),
+                                                     self.restrictionLine2.text())
+        elif self.nucleotideRadio.isChecked():
+            resultInsert = self.entrez_fetch_nucleotide(self.idLineEdit.text(), self.restrictionLine1.text(),
+                                                        self.restrictionLine2.text())
+        else:
+            raise Exception
 
-    def entrez_fetch_protein(self):
+
+
+        self.entrezTableWidget.setItem(last_row, 1, QTableWidgetItem(resultInsert.dna))
+        self.entrezTableWidget.setItem(last_row, 2, QTableWidgetItem(resultInsert.mrna))
+        self.entrezTableWidget.setItem(last_row, 3, QTableWidgetItem(resultInsert.aa_sequence))
+        self.entrezTableWidget.setItem(last_row, 4, QTableWidgetItem(resultInsert.fw_primer))
+        self.entrezTableWidget.setItem(last_row, 5, QTableWidgetItem(resultInsert.rev_primer))
+        self.entrezTableWidget.setItem(last_row, 6, QTableWidgetItem(resultInsert.fw_assembly))
+        self.entrezTableWidget.setItem(last_row, 7, QTableWidgetItem(resultInsert.rev_assembly))
+        # Added last so that line index continuity is kept when exception occurs
+        self.entrezTableWidget.setItem(last_row, 0, QTableWidgetItem(self.idLineEdit.text()))
+
+        resultInsert = None
+
+    def entrez_fetch_protein(self, proteinID, restriction1, restriction2):
         try:
             # Get AA sequence from Entrez database.
-            proteinID = self.idLineEdit.text()
             handle = Entrez.efetch(db="protein", id=proteinID, rettype="fasta")
             record = SeqIO.read(handle, "fasta")
 
             aa_sequence = record.seq
             if verbose:
                 print(f"AA Sequence: {aa_sequence}")
-
-            aa_sequence = aa_sequence
 
             # Reverse translate Protein to RNA
             codon_list = list(map(aa_to_codon, aa_sequence))  # Use RT to get codon list from AAs
@@ -164,47 +151,87 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 print("cDNA (5-3): " + cdna_seq)
                 print("cDNA (3-5): " + cdna_seq.complement())
 
-            # Design primers.
-            cdna_dseq = Dseqrecord(cdna_seq, str(cdna_seq.complement), linear=True, circular=False)
-            ampl = primer_design(cdna_dseq)
-
-            fw_seq = ampl.forward_primer
-            rev_seq = ampl.reverse_primer[::-1]
-
-            for codon in codon_list:  # Check for hairpin structure in primer.
-                codon = codon
-                anti_codon = str(Seq(codon).complement())
-
-                # check if codon in ForwardPrimer and ReversePrimer
-                if fw_seq.seq.find(codon) == -1 and rev_seq.seq.find(anti_codon) == -1:
-                    break
-
-            # Assembly primers with the adition of extra codon and restriction sites selected
-            fw_assembly = codon.lower() + fw_seq.seq + getattr(getattr(Restriction,
-                                                                       self.restrictionLine_1.text()),
-                                                               'site').lower()
-
-            rev_assembly = anti_codon.lower() + rev_seq.seq + getattr(getattr(Restriction,
-                                                                              self.restrictionLine_1.text()),
-                                                                      'site').lower()
+            fw_primer, rev_primer, fw_assembly, rev_assembly= design_primers(cdna, restriction1, restriction2)
 
             # Create insert object with the properties to return and display.
-            insert = Insert(str(proteinID), str(aa_sequence), str(cdna), str(mrna), str(fw_seq.seq),
-                            str(rev_seq.seq), str(fw_assembly), str(rev_assembly))
+            insert = Insert(str(proteinID), str(aa_sequence), str(cdna), str(mrna), str(fw_primer.seq),
+                            str(rev_primer.seq), str(fw_assembly), str(rev_assembly))
 
             # Set status for notifying user of method success.
-            self.listStatus.setText = 'Protein Data Fetched'
+            print(insert.dna)
+            return insert
+
+        except urllib.error.HTTPError:  # If cannot find AA sequence, fill all columns "n/a".
+            if verbose:
+                print("HTTP Error.")
+
+        except Exception as e:
+            print(e)
+
+    def entrez_fetch_nucleotide(self, nucleotideID, restriction1, restriction2):
+        try:
+            # Get AA sequence from Entrez database.
+            handle = Entrez.efetch(db="nucleotide", id=nucleotideID, rettype="fasta")
+            record = SeqIO.read(handle, "fasta")
+
+            # Get DNA sequence as a string
+            dna_sequence = record.seq
+
+            # DNA to RNA
+            mrna = Seq.transcribe(dna_sequence)
+
+            # mRNA to AA_Sequence
+            mrna.translate()
+
+            # Get primers for the dna and its assembly
+            fw_primer, rev_primer, fw_assembly, rev_assembly = design_primers(dna_sequence, restriction1, restriction2)
+
+            # Create insert object with the properties to return and display.
+            insert = Insert(str(nucleotideID), 'Not Translated', str(dna_sequence), str(mrna), str(fw_primer.seq),
+                            str(rev_primer.seq), str(fw_assembly), str(rev_assembly))
+
+            # Set status for notifying user of method success.
 
             return insert
 
         except urllib.error.HTTPError:  # If cannot find AA sequence, fill all columns "n/a".
             if verbose:
                 print("HTTP Error.")
-            self.listStatus.text = "HTTP Error."
 
         except Exception as e:
             print(e)
-            self.listStatus.text = e
+
+
+def design_primers(dna_sequence, restriction1, restriction2):
+    try:
+        dna_Seq = Seq(dna_sequence)
+        dna_Dseq = Dseqrecord(dna_Seq, str(dna_Seq.complement), linear=True, circular=False)
+        ampl = primer_design(dna_Dseq)
+
+        fw_primer = ampl.forward_primer
+        rev_primer = ampl.reverse_primer[::-1]
+
+        for codon in codons:  # Check for hairpin structure in primer.
+            anti_codon = str(Seq(codon).complement())
+
+            # check if codon in ForwardPrimer and ReversePrimer
+            if fw_primer.seq.find(codon) == -1 and rev_primer.seq.find(anti_codon) == -1:
+                break
+
+        # Assembly primers with the adition of extra codon and restriction sites selected
+        fw_assembly = codon.lower() + fw_primer.seq + getattr(getattr(Restriction,
+                                                                      restriction1),
+                                                              'site').lower()
+
+        rev_assembly = anti_codon.lower() + rev_primer.seq + getattr(getattr(Restriction,
+                                                                             restriction2),
+                                                                     'site').lower()
+
+        # Create insert object with the properties to return and display.
+        return fw_primer, rev_primer, fw_assembly, rev_assembly
+
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
