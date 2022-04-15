@@ -7,16 +7,43 @@ from pydna.design import primer_design
 import random
 from PyQt5 import QtWidgets, uic
 import sys
-import SequenceCompiler as SeqC
+import SequenceCompilerLibrary as SeqLib
+import sqlite3
 
-# Parameters
+# DataBase
+conn = sqlite3.connect('new.db')
+
+c = conn.cursor()
+
+c.execute('''CREATE TABLE IF NOT EXISTS "Inserts" (
+            "id" TEXT NOT NULL,
+            "dna_sequence" TEXT NOT NULL,
+            "rna_sequence"	TEXT NOT NULL,
+            "amino_acid" TEXT NOT NULL,
+            "forward_primer" TEXT NOT NULL,
+            "reverse_primer" TEXT NOT NULL,
+            "assembly_fw" TEXT NOT NULL,
+            "assembly_rev" TEXT NOT NULL,
+            "type" TEXT NOT NULL
+            )''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS "Plasmids" (
+
+            )''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS "Assemblies" (
+
+            )''')
+
+# Get UI file.
 qtCreatorFile = "SeqC.ui"
 
+# Create Window and QtBase instances.
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 
 
+# The Class that encapsulates the UI elements, inheriting from QtMainWindow.
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-
     def __init__(self, parent=None):
         super(MyWindow, self).__init__(parent)
 
@@ -44,26 +71,27 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # On click methods for buttons.
 
-    # On click method for inhabitating the table with protein or nucleotide data.
+    # On click method for inhabiting the table with protein or nucleotide data.
     def table_results(self):
-        last_row = self.entrezTableWidget.rowCount()
-        row_toAdd = last_row + 1
+        last_row = self.entrezTableWidget.rowCount()  # Get the last row index of the table
+        row_toAdd = last_row + 1  # Add 1 to last row for indexing.
 
         # Increase row number to inhabit incoming data in the following lines.
         self.entrezTableWidget.setRowCount(row_toAdd)
 
         # Get protein data using function in SequenceCompiler library
         if self.proteinRadio.isChecked():
-            resultInsert = SeqC.entrez_fetch_protein(self.idLineEdit.text(), self.restrictionLine1.text(),
-                                                     self.restrictionLine2.text())
+            resultInsert = SeqLib.entrez_fetch_protein(self.idLineEdit.text(), self.restrictionLine1.text(),
+                                                       self.restrictionLine2.text())
 
         # Get nucleotide data using function in SequenceCompiler library
         elif self.nucleotideRadio.isChecked():
-            resultInsert = SeqC.entrez_fetch_nucleotide(self.idLineEdit.text(), self.restrictionLine1.text(),
-                                                        self.restrictionLine2.text())
+            resultInsert = SeqLib.entrez_fetch_nucleotide(self.idLineEdit.text(), self.restrictionLine1.text(),
+                                                          self.restrictionLine2.text())
         else:
             raise Exception
 
+        # Add values to the next row of the table
         self.entrezTableWidget.setItem(last_row, 1, QTableWidgetItem(resultInsert.dna))
         self.entrezTableWidget.setItem(last_row, 2, QTableWidgetItem(resultInsert.mrna))
         self.entrezTableWidget.setItem(last_row, 3, QTableWidgetItem(resultInsert.aa_sequence))
