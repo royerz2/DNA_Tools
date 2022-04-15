@@ -62,10 +62,10 @@ def aa_to_codon(n):
     return codon_str
 
 
-def entrez_fetch_protein(proteinID, restriction1, restriction2):
+def entrez_fetch_protein(protein_id, restriction1, restriction2):
     try:
         # Get AA sequence from Entrez database.
-        handle = Entrez.efetch(db="protein", id=proteinID, rettype="fasta")
+        handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta")
         record = SeqIO.read(handle, "fasta")
 
         aa_sequence = record.seq
@@ -81,7 +81,7 @@ def entrez_fetch_protein(proteinID, restriction1, restriction2):
         fw_primer, rev_primer, fw_assembly, rev_assembly = design_primers(cdna, restriction1, restriction2)
 
         # Create insert object with the properties to return and display.
-        insert = Insert(str(proteinID), str(aa_sequence), str(cdna), str(mrna), str(fw_primer.seq),
+        insert = Insert(str(protein_id), str(aa_sequence), str(cdna), str(mrna), str(fw_primer.seq),
                         str(rev_primer.seq), str(fw_assembly), str(rev_assembly))
 
         # Set status for notifying user of method success.
@@ -96,10 +96,10 @@ def entrez_fetch_protein(proteinID, restriction1, restriction2):
         print(e)
 
 
-def entrez_fetch_nucleotide(nucleotideID, restriction1, restriction2):
+def entrez_fetch_nucleotide(nucleotide_id, restriction1, restriction2):
     try:
         # Get AA sequence from Entrez database.
-        handle = Entrez.efetch(db="nucleotide", id=nucleotideID, rettype="fasta")
+        handle = Entrez.efetch(db="nucleotide", id=nucleotide_id, rettype="fasta")
         record = SeqIO.read(handle, "fasta")
 
         # Get DNA sequence as a string
@@ -115,7 +115,7 @@ def entrez_fetch_nucleotide(nucleotideID, restriction1, restriction2):
         fw_primer, rev_primer, fw_assembly, rev_assembly = design_primers(dna_sequence, restriction1, restriction2)
 
         # Create insert object with the properties to return and display.
-        insert = Insert(str(nucleotideID), 'Not Translated', str(dna_sequence), str(mrna), str(fw_primer.seq),
+        insert = Insert(str(nucleotide_id), 'Not Translated', str(dna_sequence), str(mrna), str(fw_primer.seq),
                         str(rev_primer.seq), str(fw_assembly), str(rev_assembly))
 
         # Set status for notifying user of method success.
@@ -180,7 +180,9 @@ def assembly_analysis(fragments_csv, linear=False):
     return assembly, assembly_result
 
 
-def plasmid_analysis(plasmid, enzyme=None, digest=False):
+def plasmid_analysis(plasmid_id, enzyme=None, digest=False):
+
+
     # If user wants digestion data, digest the plasmid with the specified
     if plasmid.linear:
         print("This DNA is not a plasmid.")
@@ -197,7 +199,6 @@ def plasmid_analysis(plasmid, enzyme=None, digest=False):
         getattr(plasmid.seq).has(restriction_site)
 
         linearized_plasmid = plasmid.linearize(enzyme)
-
         promoter_location = None
 
         # Here, the restriction sites right after the promoter will be determined and omitted.
