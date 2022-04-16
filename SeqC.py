@@ -11,7 +11,7 @@ import SequenceCompilerLibrary as SeqLib
 import sqlite3
 
 # DataBase
-conn = sqlite3.connect('new.db')
+conn = sqlite3.connect('seqc.db')
 
 c = conn.cursor()
 
@@ -28,11 +28,23 @@ c.execute('''CREATE TABLE IF NOT EXISTS "Inserts" (
             )''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS "Plasmids" (
-
+            "id" TEXT NOT NULL,
+            "dna_sequence" TEXT NOT NULL,
+            "forward_primer" TEXT NOT NULL,
+            "reverse_primer" TEXT NOT NULL,
+            "assembly_fw" TEXT NOT NULL,
+            "assembly_rev" TEXT NOT NULL,
+            "type" TEXT NOT NULL
+            
             )''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS "Assemblies" (
-
+            "id" TEXT NOT NULL,
+            "part_ids" TEXT NOT NULL,
+            "type" TEXT NOT NULL,
+            "digestion" TEXT,
+            "fw_primer" TEXT,
+            "rev_primer" TEXT
             )''')
 
 # Get UI file.
@@ -68,6 +80,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.entrezTableWidget.setItem(0, 5, QTableWidgetItem("Rev Primer"))
         self.entrezTableWidget.setItem(0, 6, QTableWidgetItem("Fw Assembly"))
         self.entrezTableWidget.setItem(0, 7, QTableWidgetItem("Rev Assembly"))
+
+        # On click actions for PCR simulation tab.
+
+        self.getPcr.clicked.connect(self.pcr_results)
 
     # On click methods for buttons.
 
@@ -106,11 +122,32 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # On click method for running PCR simulation.
     def pcr_results(self):
-        pass
+        if self.automaticPcrRadio.isChecked():
+            with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=self.nucleotidePcr.text()) as handle:
+                seq_record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"ss
+            dna_Seq = Seq(seq_record.seq)
+            dna_Dseq = Dseqrecord(dna_Seq, str(dna_Seq.complement), linear=True, circular=False)
 
+            ampl = primer_design(dna_Dseq)
+
+            dna_sequence = seq_record.seq
+            fw_primer = ampl.forward_primer
+            rev_primer = ampl.reverse_primer[::-1]
+
+        else:
+            fw_primer = self.fwPcr.text()
+            rev_primer = self.revPcr.text()
+            dna_sequence = self.dnaPcr.toPlainText()
+
+        pcr_prod = SeqLib.pcr_simulation(fw_primer, rev_primer, dna_sequence)
+        self.pcrResult.setText(pcr_prod)
+        print(pcr_prod)
+
+    # On click method for running PCR simulation.
     def assembly_results(self):
         pass
 
+    # On click method for running PCR simulation.
     def plasmid_results(self):
         pass
 

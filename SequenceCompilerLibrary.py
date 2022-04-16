@@ -65,8 +65,8 @@ def aa_to_codon(n):
 def entrez_fetch_protein(protein_id, restriction1, restriction2):
     try:
         # Get AA sequence from Entrez database.
-        handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta")
-        record = SeqIO.read(handle, "fasta")
+        with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=protein_id) as handle:
+            record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
 
         aa_sequence = record.seq
 
@@ -99,8 +99,8 @@ def entrez_fetch_protein(protein_id, restriction1, restriction2):
 def entrez_fetch_nucleotide(nucleotide_id, restriction1, restriction2):
     try:
         # Get AA sequence from Entrez database.
-        handle = Entrez.efetch(db="nucleotide", id=nucleotide_id, rettype="fasta")
-        record = SeqIO.read(handle, "fasta")
+        with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=nucleotide_id) as handle:
+            record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
 
         # Get DNA sequence as a string
         dna_sequence = record.seq
@@ -131,35 +131,27 @@ def entrez_fetch_nucleotide(nucleotide_id, restriction1, restriction2):
 
 
 def design_primers(dna_sequence, restriction1, restriction2):
-    try:
-        dna_Seq = Seq(dna_sequence)
-        dna_Dseq = Dseqrecord(dna_Seq, str(dna_Seq.complement), linear=True, circular=False)
-        ampl = primer_design(dna_Dseq)
+    dna_Seq = Seq(dna_sequence)
+    dna_Dseq = Dseqrecord(dna_Seq, str(dna_Seq.complement), linear=True, circular=False)
+    ampl = primer_design(dna_Dseq)
 
-        fw_primer = ampl.forward_primer
-        rev_primer = ampl.reverse_primer[::-1]
+    fw_primer = ampl.forward_primer
+    rev_primer = ampl.reverse_primer
 
-        for codon in codons:  # Check for hairpin structure in primer.
-            anti_codon = str(Seq(codon).complement())
+    for codon in codons:  # Check for hairpin structure in primer.
+        anti_codon = str(Seq(codon).complement())
 
-            # check if codon in ForwardPrimer and ReversePrimer
-            if fw_primer.seq.find(codon) == -1 and rev_primer.seq.find(anti_codon) == -1:
-                break
+        # check if codon in ForwardPrimer and ReversePrimer
+        if fw_primer.seq.find(codon) == -1 and rev_primer.seq.find(anti_codon) == -1:
+            break
 
-        # Assembly primers with the adition of extra codon and restriction sites selected
-        fw_assembly = codon.lower() + fw_primer.seq + getattr(getattr(Restriction,
-                                                                      restriction1),
-                                                              'site').lower()
+    # Assembly primers with the adition of extra codon and restriction sites selected
+    fw_assembly = codon.lower() + getattr(getattr(Restriction, restriction1), 'site').lower() + fw_primer.seq
 
-        rev_assembly = anti_codon.lower() + rev_primer.seq + getattr(getattr(Restriction,
-                                                                             restriction2),
-                                                                     'site').lower()
+    rev_assembly = anti_codon.lower() + getattr(getattr(Restriction, restriction2), 'site').lower() + rev_primer.seq
 
-        # Create insert object with the properties to return and display.
-        return fw_primer, rev_primer, fw_assembly, rev_assembly
-
-    except Exception as e:
-        print(e)
+    # Create insert object with the properties to return and display.
+    return fw_primer, rev_primer, fw_assembly, rev_assembly
 
 
 def pcr_simulation(forward_primer, reverse_primer, dna):
@@ -168,7 +160,7 @@ def pcr_simulation(forward_primer, reverse_primer, dna):
     return pcr_prod
 
 
-def assembly_analysis(fragments_csv, linear=False):
+def assembly_analysis(fragments_csv, linear):
     fragments_tuple = tuple(fragments_csv.split(','))
     assembly = Assembly(fragments_tuple, limit=14)
 
@@ -181,7 +173,8 @@ def assembly_analysis(fragments_csv, linear=False):
 
 
 def plasmid_analysis(plasmid_id, enzyme=None, digest=False):
-
+    with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=plasmid_id) as handle:
+        plasmid = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
 
     # If user wants digestion data, digest the plasmid with the specified
     if plasmid.linear:
@@ -198,14 +191,14 @@ def plasmid_analysis(plasmid_id, enzyme=None, digest=False):
         # Check if plasmid has digestion site:
         getattr(plasmid.seq).has(restriction_site)
 
-        linearized_plasmid = plasmid.linearize(enzyme)
+        linear_plasmid = plasmid.linearize(enzyme)
         promoter_location = None
 
         # Here, the restriction sites right after the promoter will be determined and omitted.
 
         advised_restrictions = None
 
-    return linearized_plasmid, promoter_location, advised_restrictions
+    return linear_plasmid, promoter_location, advised_restrictions
 
 
 if __name__ == "__main__":

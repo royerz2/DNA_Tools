@@ -11,14 +11,18 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import plasmidviewer as pv
 
-handle = Entrez.efetch(db="", id=, rettype="fasta")
-record = SeqIO.read(handle, "fasta")
+nucleotide_id = "M77789.2"
+Entrez.email = "A.N.Other@example.com"
+with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=nucleotide_id) as handle:
+    record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
 
 feats = []
 facecolors = []
 edgecolors = []
 labelcolors = []
+
 for feat in record.features:
+    print(feat)
     if feat.type == "source" or feat.type == "primer_bind":
         pass
     else:
@@ -37,12 +41,6 @@ for feat in record.features:
             labelcolors.append(None)
             facecolors.append(None)
 
-fig, ax = pv.visualize(record, feature_list=feats, title="lentiCas9-EGFP")
-fig.savefig("test1.pdf")
 
 fig, ax = pv.visualize(record, feature_list=feats, edgecolor=edgecolors, title="lentiCas9-EGFP")
-fig.savefig("test2.pdf")
-
-fig, ax = pv.visualize(record, feature_list=feats, facecolor=facecolors, edgecolor=edgecolors, labelcolor=labelcolors,
-                       title="lentiCas9-EGFP", inner_diameter=500, tick_interval=1000)
-fig.savefig("test3.pdf")
+fig.savefig("test2.png")
