@@ -123,6 +123,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # On click method for running PCR simulation.
     def pcr_results(self):
         if self.automaticPcrRadio.isChecked():
+            print('Getting values from Entrez database.')
             with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=self.nucleotidePcr.text()) as handle:
                 seq_record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"ss
             dna_Seq = Seq(seq_record.seq)
@@ -132,7 +133,17 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             dna_sequence = seq_record.seq
             fw_primer = ampl.forward_primer
-            rev_primer = ampl.reverse_primer[::-1]
+            rev_primer = ampl.reverse_primer
+
+            pcr_prod = SeqLib.pcr_simulation(fw_primer, rev_primer, dna_sequence)
+            print(pcr_prod.figure())
+
+            pcr_success = True
+
+            # Print results to the pcrResult QTextEdit on front end.
+            self.pcrResult.setPlainText(str(pcr_prod.figure()) +
+                                        '\n\n\n' +
+                                        str(pcr_prod.program()))
 
         else:
             fw_primer = self.fwPcr.text()
@@ -140,14 +151,21 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             dna_sequence = self.dnaPcr.toPlainText()
 
         pcr_prod = SeqLib.pcr_simulation(fw_primer, rev_primer, dna_sequence)
-        self.pcrResult.setText(pcr_prod)
-        print(pcr_prod)
+        print(pcr_prod.figure())
 
-    # On click method for running PCR simulation.
+        pcr_success = True
+
+        # Print results to the pcrResult QTextEdit on front end.
+        self.pcrResult.setPlainText(str(pcr_prod.figure()) +
+                                    '\n\n\n' +
+                                    str(pcr_prod.program()))
+
+
+    # On click method for running assembly simulation.
     def assembly_results(self):
         pass
 
-    # On click method for running PCR simulation.
+    # On click method for running plasmid analysis.
     def plasmid_results(self):
         pass
 
