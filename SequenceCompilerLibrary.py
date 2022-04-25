@@ -65,8 +65,8 @@ def aa_to_codon(n):
 def entrez_fetch_protein(protein_id, restriction1, restriction2):
     try:
         # Get AA sequence from Entrez database.
-        with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=protein_id) as handle:
-            record = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
+        with Entrez.efetch(db="protein", id=protein_id, rettype="fasta") as handle:
+            record = SeqIO.read(handle, "fasta")
 
         aa_sequence = record.seq
 
@@ -85,12 +85,10 @@ def entrez_fetch_protein(protein_id, restriction1, restriction2):
                         str(rev_primer.seq), str(fw_assembly), str(rev_assembly))
 
         # Set status for notifying user of method success.
-        print(insert.dna)
         return insert
 
     except urllib.error.HTTPError:  # If cannot find AA sequence, fill all columns "n/a".
-        if verbose:
-            print("HTTP Error.")
+        print("HTTP Error.")
 
     except Exception as e:
         print(e)
