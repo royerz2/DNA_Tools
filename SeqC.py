@@ -160,7 +160,6 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                     '\n\n\n' +
                                     str(pcr_prod.program()))
 
-
     # On click method for running assembly simulation.
     def assembly_results(self):
         pass

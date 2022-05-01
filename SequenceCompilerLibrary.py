@@ -1,5 +1,5 @@
 import urllib.error
-from Bio import SeqIO, Entrez, Restriction
+from Bio import SeqIO, Entrez, Restriction, SeqFeature
 from Bio.Seq import Seq
 from PyQt5.QtWidgets import QTableWidgetItem
 from pydna.assembly import Assembly
@@ -170,34 +170,139 @@ def assembly_analysis(fragments_csv, linear):
     return assembly, assembly_result
 
 
-def plasmid_analysis(plasmid_id, enzyme=None, digest=False):
+def prepare_insert(insert_id, insert_type, insert_restriction_5, insert_restriction_3):
+    if insert_type == 'nucleotide':
+        newInsert = entrez_fetch_nucleotide(insert_id, insert_restriction_5, insert_restriction_3)
+
+    elif insert_type == 'protein':
+        newInsert = entrez_fetch_protein(insert_id, insert_restriction_5, insert_restriction_3)
+
+    else:
+        raise IndexError('This function can only accept nucleotide or protein type inserts.')
+
+    # Run PCR with the assembly primers to introduce restriction sites we need.
+    pcr_prod = pcr(newInsert.fw_assembly, newInsert.rev_assembly, newInsert.dna)
+
+    # Convert pcr product sequence to Dseqrecord object.
+    pcr_prod_dseqrecord = Dseqrecord(pcr_prod.seq, linear=True, circular=False)
+
+    if insert_restriction_3 == insert_restriction_5:
+        # Cut 5' and 3' ends.
+        restricted_pcr_prod_dseqrecords = pcr_prod_dseqrecord.cut(getattr(Restriction, insert_restriction_5))
+        restricted_pcr_prod_dseqrecord = restricted_pcr_prod_dseqrecords[1]
+
+    else:
+        # Cut 5' end.
+        five_restricted_inserts = pcr_prod_dseqrecord.cut(getattr(Restriction, insert_restriction_5))
+        five_restricted_insert = five_restricted_inserts[1]
+
+        # Cut 3' end.
+        all_restricted_inserts = five_restricted_insert.cut(getattr(Restriction, insert_restriction_3))
+        restricted_pcr_prod_dseqrecord = all_restricted_inserts[1]
+
+    return restricted_pcr_prod_dseqrecord
+
+
+def gibson_assembly(plasmid_id='L37382.1',
+                    plasmid_digestion='HindIII',
+                    insert_ids=(('X71080.1', 'HindIII', 'nucleotide'),
+                                ('X71080.1', 'XbaI', 'protein'))):
+
+    # Fetch and Digest plasmid
+    with Entrez.efetch(db='nucleotide', rettype='gb', retmode='text', id=plasmid_id) as handle:
+        seq_record = SeqIO.read(handle, 'gb')
+
+    dseq_record = Dseqrecord(seq_record, linear=False, circular=True)
+    restricted_plasmid = dseq_record.linearize(getattr(Restriction, plasmid_digestion))
+
+    if len(insert_ids) == 1:
+        single_insert = True
+    else:
+        single_insert = False
+
+    # if there is only one insert the logic chooses to insert digestion sites to the insert homogeneously.
+    if single_insert:
+        insert_id = insert_ids[0][0]
+        insert_type = insert_ids[0][2]
+        insert_restriction_5 = plasmid_digestion
+        insert_restriction_3 = plasmid_digestion
+
+        restricted_pcr_prod_dseqrecord = prepare_insert(insert_id,
+                                                        insert_type,
+                                                        insert_restriction_5,
+                                                        insert_restriction_3)
+
+        assemblyResult = (restricted_plasmid + restricted_pcr_prod_dseqrecord).looped()
+
+    # If there is only one insert the logic chooses to insert digestion sites to the insert heterogeneously with next
+    # restriction site as the first of the next one.
+    else:
+        ampliconsList = []
+        restricted_ampliconsList = []
+        linear_assembly = restricted_plasmid
+        i = 0
+        # If in the first insert position, digest 5' with plasmid restricting enzyme, 3' with tuple spesifcied enzyme.
+        if i == 0:
+            insert_id = insert_ids[0][0]
+            insert_type = insert_ids[0][2]
+            insert_restriction_5 = plasmid_digestion
+            insert_restriction_3 = insert_ids[i + 1][1]
+
+            restricted_pcr_prod_dseqrecord = prepare_insert(insert_id,
+                                                            insert_type,
+                                                            insert_restriction_5,
+                                                            insert_restriction_3)
+
+            # Add results to the respective lists.
+            restricted_ampliconsList.append(restricted_pcr_prod_dseqrecord)
+            print(restricted_plasmid, restricted_pcr_prod_dseqrecord)
+            linear_assembly = restricted_plasmid + restricted_pcr_prod_dseqrecord
+
+        # Elif the last insert position, digest 5' with tuple spesifcied enzyme, 3' with plasmid restricting enzyme.
+        elif i == len(insert_ids)-1:
+            insert_id = insert_ids[0][0]
+            insert_type = insert_ids[0][2]
+            insert_restriction_5 = insert_ids[i][1]
+            insert_restriction_3 = plasmid_digestion
+
+            restricted_pcr_prod_dseqrecord = prepare_insert(insert_id,
+                                                            insert_type,
+                                                            insert_restriction_5,
+                                                            insert_restriction_3)
+
+            restricted_ampliconsList.append(restricted_pcr_prod_dseqrecord)
+            linear_assembly = restricted_plasmid + restricted_pcr_prod_dseqrecord
+
+        # Else in a mid insert position, digest 5' and 3' with tuple spesifcied enzyme.
+        else:
+            insert_id = insert_ids[0][0]
+            insert_type = insert_ids[0][2]
+            insert_restriction_5 = insert_ids[i][1]
+            insert_restriction_3 = insert_ids[i + 1][1]
+            restricted_pcr_prod_dseqrecord = prepare_insert(insert_id,
+                                                            insert_type,
+                                                            insert_restriction_5,
+                                                            insert_restriction_3)
+
+            restricted_ampliconsList.append(restricted_pcr_prod_dseqrecord)
+            linear_assembly = restricted_plasmid + restricted_pcr_prod_dseqrecord
+
+        assemblyResult = linear_assembly.looped()
+
+    print('Doing circular assembly.')
+    print(restricted_plasmid)
+
+    return assemblyResult
+
+
+def plasmid_analysis(plasmid_id):
     with Entrez.efetch(db="nucleotide", rettype="gb", retmode="text", id=plasmid_id) as handle:
         plasmid = SeqIO.read(handle, "gb")  # using "gb" as an alias for "genbank"
 
-    # If user wants digestion data, digest the plasmid with the specified
-    if plasmid.linear:
-        print("This DNA is not a plasmid.")
-    elif digest:
-        # Check if enzyme exists in database
-        try:
-            restriction_object = getattr(Restriction, enzyme)
-        except Exception as e:
-            print("Restriction enzyme does not exist.")
+    features = plasmid.features
 
-        restriction_site = restriction_object.site
 
-        # Check if plasmid has digestion site:
-        getattr(plasmid.seq).has(restriction_site)
-
-        linear_plasmid = plasmid.linearize(enzyme)
-        promoter_location = None
-
-        # Here, the restriction sites right after the promoter will be determined and omitted.
-
-        advised_restrictions = None
-
-    return linear_plasmid, promoter_location, advised_restrictions
 
 
 if __name__ == "__main__":
-    print('This file is not made to run.')
+    plasmid_analysis('L37382.1')

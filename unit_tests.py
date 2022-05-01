@@ -1,5 +1,4 @@
 import unittest
-import gibson_asembly as gibby
 from Bio import Entrez, SeqIO
 import SequenceCompilerLibrary as SeqLib
 
@@ -23,7 +22,7 @@ class AssemblyTests(unittest.TestCase):
         plasmid_id = 'L37382.1'
         plasmid_digestion = 'XbaI'
         insert_ids = [('X71080.1', 'XbaI', 'nucleotide')]
-        vector = gibby.assembly_analysis(plasmid_id=plasmid_id,
+        vector = SeqLib.gibson_assembly(plasmid_id=plasmid_id,
                                          plasmid_digestion=plasmid_digestion,
                                          insert_ids=insert_ids)
         self.assertTrue(vector.circular, 'Insert did not circularize!')  # Check if circular assembly happens.
@@ -31,9 +30,9 @@ class AssemblyTests(unittest.TestCase):
 
     def test_single_gibson_protein(self):
         plasmid_id = 'L37382.1'
-        plasmid_digestion = 'HindIII'
+        plasmid_digestion = 'XbaI'
         insert_ids = [('CAA50398.1', 'XbaI', 'protein')]
-        vector = gibby.assembly_analysis(plasmid_id=plasmid_id,
+        vector = SeqLib.gibson_assembly(plasmid_id=plasmid_id,
                                          plasmid_digestion=plasmid_digestion,
                                          insert_ids=insert_ids)
         self.assertTrue(vector.circular, 'Insert did not circularize!')  # Check if circular assembly happens.
@@ -46,29 +45,34 @@ class AssemblyTests(unittest.TestCase):
                       ('X71080.1', 'XbaI', 'nucleotide'),
                       ('CAA50398.1', 'HindIII', 'protein')]
 
-        vector = gibby.assembly_analysis(plasmid_id=plasmid_id,
+        vector = SeqLib.gibson_assembly(plasmid_id=plasmid_id,
                                          plasmid_digestion=plasmid_digestion,
                                          insert_ids=insert_ids)
         self.assertTrue(vector.circular, 'Insert did not circularize!')
         # Expected vector size after looping can also be asserted for higher level of precision.
 
 
-class PcrSimulationTests:
+class PcrSimulationTests(unittest.TestCase):
     pass
 
 
-class UITests:
+class UITests(unittest.TestCase):
     pass
 
 
-class PlasmidAnalysisTests:
-    pass
+class PlasmidAnalysisTests(unittest.TestCase):
+    def find_restrictions(self):
+        pass
+
+    def find_restrictions_mcs(self):
+        pass
 
 
-class PrimerDesignTests:
+class PrimerDesignTests(unittest.TestCase):
     pass
 
 
 if __name__ == '__main__':
     AssemblyTests
     RefSeqScrapingTests
+    PlasmidAnalysisTests
